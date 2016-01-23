@@ -1,2 +1,1 @@
-# jimvalue
-Immutable values and business objects for Java
+# jimvalue - Immutable values and business objects for Java

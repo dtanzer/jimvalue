@@ -1,0 +1,108 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	ext {
+		springBootVersion = '1.3.0.RELEASE'
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+apply plugin: 'spring-boot'
+
+repositories {
+	mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+group = "net.davidtanzer"
+archivesBaseName = "jimvalue"
+version = '0.1.0'
+
+dependencies {
+	compile 'org.javassist:javassist:3.20.0-GA'
+
+	testCompile 'org.hamcrest:hamcrest-all:1.3'
+	testCompile 'junit:junit:4.11'
+	testCompile 'org.mockito:mockito-core:1.9.5'
+
+	testCompile 'org.springframework.boot:spring-boot-starter'
+	compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	testCompile 'com.h2database:h2'
+
+	testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
+
+task javadocJar(type: Jar) {
+	classifier = 'javadoc'
+	from javadoc
+}
+
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+artifacts {
+	archives javadocJar, sourcesJar
+}
+
+signing {
+	sign configurations.archives
+}
+
+def ossrhUsername = hasProperty('ossrhUsername') ? ossrhUsername : ''
+def ossrhPassword = hasProperty('ossrhPassword') ? ossrhPassword : ''
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+				authentication(userName: ossrhUsername, password: ossrhPassword)
+			}
+
+			pom.project {
+				name 'jimvalue'
+				packaging 'jar'
+				description 'jimValue - Immutable values for Java'
+				url 'https://github.com/dtanzer/jimvalue'
+
+				scm {
+					connection 'scm:git:https://github.com/dtanzer/jimvalue.git'
+					developerConnection 'scm:git:https://github.com/dtanzer/jimvalue.git'
+					url 'https://github.com/dtanzer/jimvalue'
+				}
+
+				licenses {
+					license {
+						name 'The Apache License, Version 2.0'
+						url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+					}
+				}
+
+				developers {
+					developer {
+						id 'dtanzer'
+						name 'David Tanzer'
+						email 'business@davidtanzer.net'
+					}
+				}
+			}
+		}
+	}
+}
