@@ -5,7 +5,7 @@ import net.davidtanzer.jimvalue.StringValueTest;
 import javax.persistence.*;
 import java.io.Serializable;
 
-@Entity(name="Foo")
+@Entity
 public abstract class UserEntity implements User {
 	@Embeddable
 	public static class EmbeddedUserName extends EmbeddedSingleValue<String> implements User.UserName, Serializable {}

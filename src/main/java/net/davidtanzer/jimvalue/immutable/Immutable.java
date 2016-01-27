@@ -6,7 +6,13 @@ import java.lang.reflect.Proxy;
 
 public interface Immutable {
 	static <T extends Immutable> T create(Class<T> type, ImmutableInitializer<T> initializer) {
-		//TODO check the stack trace whether this method was called directly by a static method of type
+		final StackTraceElement[] stackTrace = new Exception().getStackTrace();
+		final StackTraceElement caller = stackTrace[1];
+
+		if(!caller.getClassName().equals(type.getName())) {
+			throw new IllegalStateException("Cannot create immutable: \"create\" must be called from immutable type.");
+		}
+
 		PropertyIdGenerator<T> propertyIdGenerator = new PropertyIdGenerator(type);
 		final ValueInitializer<T> valueInitializer = new ValueInitializer<>(propertyIdGenerator);
 

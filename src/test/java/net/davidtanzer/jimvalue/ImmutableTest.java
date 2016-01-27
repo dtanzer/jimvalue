@@ -9,13 +9,19 @@ public class ImmutableTest {
 	interface User extends Immutable {
 		UserName getUserName();
 		Password getPassword();
+
+		static User createUser(final UserName userName, final Password password) {
+			return Immutable.create(User.class, (val, prop) -> {
+				val.set(prop.getUserName()).to(userName);
+				val.set(prop.getPassword()).to(password);
+			});
+		}
 	}
 
 	public static void main(String[] args) {
-		User user = Immutable.create(User.class, (val, prop) -> {
-			val.set(prop.getUserName()).to(SingleValue.create(UserName.class, "dtanzer"));
-			val.set(prop.getPassword()).to(SingleValue.create(Password.class, "supersecret"));
-		});
+		User user = User.createUser(
+				SingleValue.create(UserName.class, "dtanzer"),
+				SingleValue.create(Password.class, "supersecret"));
 
 		System.out.println(user.getUserName());
 		System.out.println(user.getPassword());

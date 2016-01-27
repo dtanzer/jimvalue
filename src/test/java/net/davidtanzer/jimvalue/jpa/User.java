@@ -11,4 +11,12 @@ public interface User extends Immutable {
 
 	UserName getUserName();
 	Password getPassword();
+
+	static User createUser(final UserName userName, final Password password) {
+		return Immutable.create(User.class, (val, prop) -> {
+			val.set(prop.getUserName()).to(userName);
+			val.set(prop.getPassword()).to(password);
+		});
+	}
+
 }

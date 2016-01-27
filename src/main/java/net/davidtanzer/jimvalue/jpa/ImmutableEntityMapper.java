@@ -1,6 +1,7 @@
 package net.davidtanzer.jimvalue.jpa;
 
 import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyFactory;
 import net.davidtanzer.jimvalue.SingleValue;
 import net.davidtanzer.jimvalue.immutable.Immutable;
@@ -16,13 +17,23 @@ public class ImmutableEntityMapper {
 
 		final MethodHandler handler = new EntityMethodHandler(immutable);
 		final Object proxy;
+
 		try {
+
 			proxy = proxyFactory.create(new Class[0], new Object[0], handler);
+			//((Proxy)obj).setHandler(mh);
 		} catch (Exception e) {
 			throw new IllegalStateException("Could not create entity proxy for object "+immutable+", proxy class "+entityClass.getName(), e);
 		}
 
 		return (E) proxy;
+	}
+
+	public static <T> Class<? extends T> entityClass(final Class<T> entityClass) {
+		ProxyFactory proxyFactory = new ProxyFactory();
+		proxyFactory.setSuperclass(entityClass);
+
+		return proxyFactory.createClass();
 	}
 
 	private static class EntityMethodHandler implements MethodHandler {
@@ -49,6 +60,16 @@ public class ImmutableEntityMapper {
 				return proceed.invoke(self, args);
 			}
 			return null;
+		}
+	}
+
+	public static <V, T extends SingleValue<V>, R extends EmbeddedSingleValue<V>> R map(final T value, final Class<R> toClass) {
+		try {
+			final R toVal = toClass.newInstance();
+			toVal.setValue(value.getValue());
+			return toVal;
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new IllegalStateException("Could not create value of type "+toClass, e);
 		}
 	}
 }

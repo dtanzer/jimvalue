@@ -22,4 +22,8 @@ public class EmbeddedSingleValue<T> implements SingleValue<T> {
 		this.value = value;
 	}
 
+	@Override
+	public String toString() {
+		return String.valueOf(value);
+	}
 }

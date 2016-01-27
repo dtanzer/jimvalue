@@ -1,10 +1,9 @@
 package net.davidtanzer.jimvalue.jpa;
 
 import net.davidtanzer.jimvalue.SingleValue;
-import net.davidtanzer.jimvalue.hibernate.ProxiedEntityNameResover;
-import net.davidtanzer.jimvalue.immutable.Immutable;
+import net.davidtanzer.jimvalue.hibernate.ProxiedEntityNameResolver;
+import net.davidtanzer.jimvalue.hibernate.ProxiedEntityPersistenceProvider;
 import org.hibernate.EntityNameResolver;
-import org.hibernate.SessionFactory;
 import org.hibernate.internal.SessionFactoryImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
+import java.util.List;
 import java.util.Properties;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -32,10 +32,10 @@ public class ImmutableJpaTest {
 
 	@Test
 	public void canSaveEntityToTheDatabaseAndLoadItAgain() {
-		final User user = Immutable.create(User.class, (val, prop) -> {
-			val.set(prop.getUserName()).to(SingleValue.create(User.UserName.class, "dtanzer"));
-			val.set(prop.getPassword()).to(SingleValue.create(User.Password.class, "supersecret"));
-		});
+		final User user = User.createUser(
+			SingleValue.create(User.UserName.class, "dtanzer"),
+			SingleValue.create(User.Password.class, "supersecret")
+		);
 
 		final UserEntity userEntity = ImmutableEntityMapper.mapImmutableToEntity(user, UserEntity.class);
 
@@ -43,6 +43,10 @@ public class ImmutableJpaTest {
 		em.getTransaction().begin();
 		em.persist(userEntity);
 		em.getTransaction().commit();
+
+		final UserEntity.EmbeddedUserName key = ImmutableEntityMapper.map(SingleValue.create(User.UserName.class, "dtanzer"), UserEntity.EmbeddedUserName.class);
+		UserEntity loadedEntity = em.find(UserEntity.class, key);
+		final List<UserEntity> loadedUsers = em.createQuery("from UserEntity u").getResultList();
 	}
 
 	public static class Configuration {
@@ -62,6 +66,7 @@ public class ImmutableJpaTest {
 			JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
 			em.setJpaVendorAdapter(vendorAdapter);
 			em.setJpaProperties(additionalProperties());
+			em.setPersistenceProvider(new ProxiedEntityPersistenceProvider());
 
 			return em;
 		}
@@ -72,16 +77,6 @@ public class ImmutableJpaTest {
 			transactionManager.setEntityManagerFactory(emf);
 
 			return transactionManager;
-		}
-
-		@Bean
-		public EntityNameResolver entityNameResolver(final EntityManagerFactory entityManagerFactory) {
-			final EntityNameResolver resolver = new ProxiedEntityNameResover();
-
-			final SessionFactoryImpl sessionFactory = entityManagerFactory.unwrap(SessionFactoryImpl.class);
-			sessionFactory.registerEntityNameResolver(resolver);
-
-			return resolver;
 		}
 
 		Properties additionalProperties() {
