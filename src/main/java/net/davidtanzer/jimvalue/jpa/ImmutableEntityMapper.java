@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 public class ImmutableEntityMapper {
 	public static <T extends Immutable, E extends T> E mapImmutableToEntity(T immutable, Class<E> entityClass) {
 		ProxyFactory proxyFactory = new ProxyFactory();
-		proxyFactory.setSuperclass(entityClass);
+		proxyFactory.setInterfaces(new Class[] {entityClass});
 
 
 		final MethodHandler handler = new EntityMethodHandler(immutable);
@@ -34,6 +34,20 @@ public class ImmutableEntityMapper {
 		proxyFactory.setSuperclass(entityClass);
 
 		return proxyFactory.createClass();
+	}
+
+	public static <I extends Immutable, E extends I> I mapEntityToImmutable(final E entity, final Class<I> immutableClass) {
+		return Immutable.createFrom(entity, immutableClass);
+	}
+
+	public static <V, T extends SingleValue<V>, R extends EmbeddedSingleValue<V>> R mapSingleValue(final T value, final Class<R> toClass) {
+		try {
+			final R toVal = toClass.newInstance();
+			toVal.setValue(value.getValue());
+			return toVal;
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new IllegalStateException("Could not create value of type "+toClass, e);
+		}
 	}
 
 	private static class EntityMethodHandler implements MethodHandler {
@@ -60,16 +74,6 @@ public class ImmutableEntityMapper {
 				return proceed.invoke(self, args);
 			}
 			return null;
-		}
-	}
-
-	public static <V, T extends SingleValue<V>, R extends EmbeddedSingleValue<V>> R map(final T value, final Class<R> toClass) {
-		try {
-			final R toVal = toClass.newInstance();
-			toVal.setValue(value.getValue());
-			return toVal;
-		} catch (InstantiationException | IllegalAccessException e) {
-			throw new IllegalStateException("Could not create value of type "+toClass, e);
 		}
 	}
 }

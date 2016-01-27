@@ -1,10 +1,7 @@
 package net.davidtanzer.jimvalue.jpa;
 
 import net.davidtanzer.jimvalue.SingleValue;
-import net.davidtanzer.jimvalue.hibernate.ProxiedEntityNameResolver;
 import net.davidtanzer.jimvalue.hibernate.ProxiedEntityPersistenceProvider;
-import org.hibernate.EntityNameResolver;
-import org.hibernate.internal.SessionFactoryImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +41,10 @@ public class ImmutableJpaTest {
 		em.persist(userEntity);
 		em.getTransaction().commit();
 
-		final UserEntity.EmbeddedUserName key = ImmutableEntityMapper.map(SingleValue.create(User.UserName.class, "dtanzer"), UserEntity.EmbeddedUserName.class);
+		final UserEntity.EmbeddedUserName key = ImmutableEntityMapper.mapSingleValue(SingleValue.create(User.UserName.class, "dtanzer"), UserEntity.EmbeddedUserName.class);
 		UserEntity loadedEntity = em.find(UserEntity.class, key);
+		final User loadedUser = ImmutableEntityMapper.mapEntityToImmutable(loadedEntity, User.class);
+
 		final List<UserEntity> loadedUsers = em.createQuery("from UserEntity u").getResultList();
 	}
 

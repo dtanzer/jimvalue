@@ -7,7 +7,7 @@ public class ProxiedEntityNameResolver implements EntityNameResolver {
 	@Override
 	public String resolveEntityName(final Object entity) {
 		if(ProxyFactory.isProxyClass(entity.getClass())) {
-			return entity.getClass().getSuperclass().getName();
+			return entity.getClass().getInterfaces()[0].getName();
 		}
 		return null;
 	}

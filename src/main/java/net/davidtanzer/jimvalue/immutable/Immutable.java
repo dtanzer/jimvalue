@@ -22,6 +22,11 @@ public interface Immutable {
 		return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] {type}, invocationHandler);
 	}
 
+	static <I extends Immutable, E extends I> I createFrom(E entity, Class<I> immutableClass) {
+		final InvocationHandler invocationHandler = new EntityInvocationHandler(entity);
+		return (I) Proxy.newProxyInstance(immutableClass.getClassLoader(), new Class[] {immutableClass}, invocationHandler);
+	}
+
 	class ValuesInvocationHandler<T extends Immutable> implements InvocationHandler {
 		private final ValueInitializer<T> valueInitializer;
 
@@ -32,6 +37,19 @@ public interface Immutable {
 		@Override
 		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
 			return valueInitializer.getValueFor(method.getName());
+		}
+	}
+
+	class EntityInvocationHandler<E> implements InvocationHandler {
+		private final E entity;
+
+		public EntityInvocationHandler(final E entity) {
+			this.entity = entity;
+		}
+
+		@Override
+		public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+			return method.invoke(entity, args);
 		}
 	}
 }
